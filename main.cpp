@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include <iomanip>
+#include <ctime>
 #include "Random.h"
 using namespace std;
 
@@ -15,6 +16,12 @@ string getString(string a);
 int getInt(string s);
 bool getBool(string s);
 
+std::string timeToString(time_t time) {
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&time));
+    return std::string(buffer);
+}
+
 class Appliances
 {
 	string name;
@@ -22,22 +29,72 @@ class Appliances
 	unsigned int qty;
 	bool status;
 	bool conditions;
+        int maintenanceInterval; // Maintenance interval in days
+        time_t lastMaintenance; // Timestamp of last maintenance
 	vector <string> failure = { "Warning: risk of electric shock due to high current!", "Warning: risk of short circuit due to high power consumption!",
 	"Warning: potential physical damage to electronic components!", "Warning: risk of any malfunction!", "Warning: risk of over heating and equipment damage" };
 
 public:
 	Appliances() = default;
-	Appliances(string N, double P, unsigned int Q, bool S, bool C)
+	Appliances(string N, double P, unsigned int Q, bool S, bool C, int interval)
 	{
 		name = N;
 		power = P;
 		qty = Q;
 		status = S;
 		conditions = C;
+		maintenanceInterval=interval;
+		lastMaintenance=time(0);
+		
 	}
 	// member functions here
-	// Report function
-	void report()
+	string getName() const {
+        return name;
+    }
+
+ time_t getLastMaintenance() const {
+        return lastMaintenance;
+    }
+
+int getMaintenanceInterval() const {
+        return maintenanceInterval;
+    }
+
+void performEarthingMaintenance() {
+        time_t now = time(0);
+        cout << "Performing earthing maintenance for appliance: " << name << endl;
+        lastMaintenance = now; // Update last maintenance timestamp
+        cout << "Earthing maintenance completed for appliance: " << name << endl;
+    }
+
+bool isMaintenanceDue() const {
+        time_t now = time(0);
+        int daysSinceLastMaintenance = (now - lastMaintenance) / (60 * 60 * 24); // Convert seconds to days
+        return daysSinceLastMaintenance >= maintenanceInterval;
+    }
+
+void DynamicScheduling(vector<Appliance>& appliances) {
+    cout << "Performing dynamic scheduling of maintenance tasks..." << endl;
+    for (Appliance& app : appliances) {
+        cout << "Appliance Name: " << app.getName() << endl;
+        cout << "Last Maintenance: " << timeToString(app.getLastMaintenance()) << endl;
+
+        cout << "Maintenance Interval: " << app.getMaintenanceInterval() << " days" << endl;
+
+        if (app.isMaintenanceDue()) {
+            cout << "Maintenance is due. Performing maintenance..." << endl;
+            app.performMaintenance(); // You need to implement this method in the Appliance class
+            cout << "Maintenance completed." << endl;
+        } else {
+            cout << "Maintenance is not due yet." << endl;
+        }
+        cout << endl;
+    }
+    cout << "Dynamic scheduling completed." << endl;
+}
+
+// Report function
+	void report()  
 	{
 		cout << "------------------------------------------------------------" << endl;
 		bool maintain = false;
@@ -248,7 +305,7 @@ public:
 			case '3':
 				check = 1; break;
 			default:
-			ERROR:
+				ERROR:
 				fflush(stdin);
 				cout << "\nInvalid input" << endl
 					<< "Press the key again: ";
@@ -313,7 +370,6 @@ public:
 		cout << "\n\n-----------------------------------------------------------------------------------------------\n";
 	}
 };
-
 // Input function for add appliances functionality
 
 Appliances inputAppliance()
@@ -338,13 +394,16 @@ Appliances inputAppliance()
 
 int main()
 {
+	
 	while (true)
 	{
 		Room a;
+		EarthingMaintenance e;
 		Appliances b = Appliances("Bulb", 30, 2, 1, 1);
 		a.addAppliance(b);
-		a.report();
 		a.currentStatus();
+		a.report();
+		e.display1();
 		bool clear;
 		clear = getBool("enter 1 to clear ");
 		if (clear)
